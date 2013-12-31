@@ -8708,28 +8708,22 @@ bool player::studied_all_recipes(it_book* book)
     return true;
 }
 
-bool player::try_study_recipe(it_book *book)
+bool player::try_study_recipe(it_book *book, recipe *sel_recipe, int skillreq)
 {
-    for (std::map<recipe*, int>::iterator iter = book->recipes.begin(); iter != book->recipes.end(); ++iter)
+  std::string recipe_name = itypes[sel_recipe->result]->name;
+  std::string book_name = book->name;
+  if (   sel_recipe->skill_used == NULL
+      || skillLevel(sel_recipe->skill_used) >= skillreq
+      || rng(0, 4) <= skillLevel(sel_recipe->skill_used) - skillreq)
     {
-        if (!knows_recipe(iter->first) &&
-            (iter->first->skill_used == NULL || skillLevel(iter->first->skill_used) >= iter->second))
-        {
-            if (iter->first->skill_used == NULL || rng(0, 4) <= skillLevel(iter->first->skill_used) - iter->second)
-            {
-                learn_recipe(iter->first);
-                g->add_msg(_("Learned a recipe for %s from the %s."),
-                           itypes[iter->first->result]->name.c_str(), book->name.c_str());
-                return true;
-            }
-            else
-            {
-                g->add_msg(_("Failed to learn a recipe from the %s."), book->name.c_str());
-                return false;
-            }
-        }
+      learn_recipe(sel_recipe);
+      g->add_msg(_("Learned a recipe for %s from the %s."), recipe_name.c_str(), book_name.c_str());
+      return true;
     }
-    return true; // _("false") seems to mean _("attempted and failed")
+  else {
+    g->add_msg(_("Failed to learn the recipe for the %s from the %s."), recipe_name.c_str(), book_name.c_str());
+  }
+  return false;
 }
 
 void player::try_to_sleep()

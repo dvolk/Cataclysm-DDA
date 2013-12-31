@@ -1027,22 +1027,42 @@ void game::process_activity()
     }
 
     no_recipes = true;
-    if (!reading->recipes.empty())
-    {
-        bool recipe_learned = u.try_study_recipe(reading);
-        if (!u.studied_all_recipes(reading))
-        {
-            no_recipes = false;
-        }
-
-        // for books that the player cannot yet read due to skill level or have no skill component,
-        // but contain lower level recipes, break out once recipe has been studied
-        if (reading->type == NULL || (u.skillLevel(reading->type) < (int)reading->req))
-        {
-            if (recipe_learned)
-                add_msg(_("The rest of the book is currently still beyond your understanding."));
-            break;
-        }
+    if (!reading->recipes.empty()) {
+      bool recipe_learned = false;
+      std::vector<recipe*> recipes;
+      std::vector<std::string> recipe_names;
+      std::vector<int> recipe_skillreqs;
+      for (std::map<recipe*, int>::iterator iter = reading->recipes.begin(); iter != reading->recipes.end(); ++iter) {
+	if(!u.knows_recipe(iter->first)) {
+	  recipes.push_back(iter->first);
+	  recipe_skillreqs.push_back(/*o_O*/ iter->second);
+	  recipe_names.push_back(itypes[iter->first->result]->name.c_str());
+	}
+      }
+      if (!recipes.empty()) {
+	if (recipes.size() == 1) 
+	  recipe_learned = u.try_study_recipe(reading, recipes.at(0), recipe_skillreqs.at(0));
+	else {
+	  // if there's more than one unlearned recipe left in the book, display a menu
+	  // asking which one to learn
+	  int recipe_index = -1;
+	  recipe_index = menu_vec(false, _("Study which recipe?"), recipe_names) - 1;
+	  recipe_learned = u.try_study_recipe(reading, recipes.at(recipe_index), recipe_skillreqs.at(recipe_index));
+	}
+      }
+      if (!u.studied_all_recipes(reading))
+	{
+	  no_recipes = false;
+	}
+      
+      // for books that the player cannot yet read due to skill level or have no skill component,
+      // but contain lower level recipes, break out once recipe has been studied
+      if (reading->type == NULL || (u.skillLevel(reading->type) < (int)reading->req))
+	{
+	  if (recipe_learned)
+	    add_msg(_("The rest of the book is currently still beyond your understanding."));
+	  break;
+	}
     }
 
     if (u.skillLevel(reading->type) < (int)reading->level) {

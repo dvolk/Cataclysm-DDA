@@ -476,10 +476,10 @@ public:
 
  bool knows_recipe(recipe *rec);
  void learn_recipe(recipe *rec);
+ bool try_study_recipe(it_book *book, recipe *rec, int skillreq);
 
  bool can_study_recipe(it_book *book);
  bool studied_all_recipes(it_book *book);
- bool try_study_recipe(it_book *book);
 
  // Auto move methods
  void set_destination(const std::vector<point> &route);
